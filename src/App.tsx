@@ -11,11 +11,12 @@ function App() {
         <Toaster
           dir="rtl"
           position="top-center"
+          theme="dark"
           richColors
           closeButton
           toastOptions={{
             classNames: {
-              toast: 'font-heebo',
+              toast: 'font-sans text-xs',
             },
           }}
         />

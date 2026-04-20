@@ -4,49 +4,48 @@
 
 @layer base {
   :root {
-    /* Brand palette (HSL triplets for Tailwind + opacity) */
-    --cream: 36 33% 94%;              /* #F5F1EA */
-    --ink: 34 14% 9%;                 /* #1A1814 */
-    --muted-foreground: 24 5% 46%;    /* #78716C */
-    --border: 36 26% 86%;             /* #E7E0D3 */
-    --surface: 0 0% 100%;             /* #FFFFFF */
-    --accent: 161 29% 25%;            /* #2E5247 */
-    --accent-foreground: 36 33% 94%;
+    /* Grafana-inspired dark palette */
+    --bg-page: 220 13% 9%;              /* #111217 */
+    --bg-panel: 220 10% 11%;             /* #181B1F */
+    --bg-panel-elev: 220 9% 15%;         /* #22252B */
+    --bg-panel-hover: 220 9% 13%;        /* #1E2126 */
+    --border: 220 6% 20%;                /* #2F3237 */
+    --border-inner: 220 9% 15%;          /* #22252B */
+    --border-strong: 220 5% 26%;         /* #3D4046 */
 
-    /* shadcn canonical tokens mapped onto our palette */
-    --background: 36 33% 94%;
-    --foreground: 34 14% 9%;
-    --card: 0 0% 100%;
-    --card-foreground: 34 14% 9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 34 14% 9%;
-    --primary: 161 29% 25%;
-    --primary-foreground: 36 33% 94%;
-    --secondary: 36 26% 90%;
-    --secondary-foreground: 34 14% 9%;
-    --muted: 36 26% 90%;
-    --destructive: 12 56% 41%;
-    --destructive-foreground: 0 0% 100%;
-    --input: 36 26% 86%;
-    --ring: 161 29% 25%;
+    --text-primary: 220 3% 85%;          /* #D8D9DA */
+    --text-body: 240 16% 83%;            /* #CCCCDC */
+    --text-muted: 225 6% 60%;            /* #9194A1 */
+    --text-subtle: 220 5% 42%;           /* #656A73 */
 
-    /* Priority swatches */
-    --priority-high: 12 56% 41%;      /* #A34730 */
-    --priority-high-bg: 19 47% 90%;   /* #F3E1D9 */
-    --priority-medium: 33 52% 48%;    /* #B8813B */
-    --priority-medium-bg: 38 63% 89%; /* #F5E8D0 */
-    --priority-low: 24 5% 46%;        /* #78716C */
-    --priority-low-bg: 42 26% 91%;    /* #EFEAE0 */
+    --accent: 26 100% 52%;               /* #FF780A */
+    --accent-hover: 26 100% 58%;         /* #FF8929 */
 
-    /* Status swatches */
-    --status-open: 24 5% 46%;         /* #78716C */
-    --status-open-bg: 42 26% 91%;
-    --status-progress: 205 41% 38%;   /* #3A6B8A */
-    --status-progress-bg: 210 36% 90%;/* #DDE8F0 */
-    --status-done: 89 25% 38%;        /* #5F7A4A */
-    --status-done-bg: 82 24% 89%;     /* #E4EADA */
+    --status-open: 225 6% 60%;           /* #9194A1 */
+    --status-progress: 214 86% 64%;      /* #5794F2 */
+    --status-done: 115 42% 58%;          /* #73BF69 */
+    --status-warn: 52 89% 50%;           /* #F2CC0C */
+    --status-danger: 354 86% 62%;        /* #F2495C */
 
-    --radius: 0.625rem;
+    /* shadcn canonical tokens */
+    --background: 220 13% 9%;
+    --foreground: 220 3% 85%;
+    --card: 220 10% 11%;
+    --card-foreground: 220 3% 85%;
+    --popover: 220 9% 15%;
+    --popover-foreground: 220 3% 85%;
+    --primary: 26 100% 52%;
+    --primary-foreground: 220 13% 9%;
+    --secondary: 220 9% 15%;
+    --secondary-foreground: 220 3% 85%;
+    --muted: 220 9% 15%;
+    --muted-foreground: 225 6% 60%;
+    --destructive: 354 86% 62%;
+    --destructive-foreground: 220 13% 9%;
+    --input: 220 6% 20%;
+    --ring: 26 100% 52%;
+
+    --radius: 2px;
   }
 
   * {
@@ -60,18 +59,21 @@
   }
 
   body {
-    @apply bg-background font-heebo text-foreground antialiased;
-    font-feature-settings: 'ss01';
-    text-rendering: optimizeLegibility;
+    @apply bg-page font-sans text-body antialiased;
+    font-size: 12px;
+    line-height: 1.5;
+    font-feature-settings: 'ss01', 'cv01';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Numbers render LTR even inside RTL paragraphs */
+  /* Numbers stay LTR inside RTL text */
   .num {
     direction: ltr;
     unicode-bidi: isolate;
     display: inline-block;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-feature-settings: 'tnum';
   }
 
   input[type='number']::-webkit-outer-spin-button,
@@ -89,18 +91,79 @@
   }
   ::-webkit-scrollbar-thumb {
     background: hsl(var(--border));
-    border-radius: 999px;
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--border-strong));
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
+
+  /* Subtle selection */
+  ::selection {
+    background: hsl(var(--accent) / 0.3);
+    color: hsl(var(--text-primary));
+  }
 }
 
 @layer components {
-  .card-surface {
-    @apply rounded-lg border border-border bg-surface shadow-soft;
+  /* Grafana panel shell */
+  .panel {
+    background: hsl(var(--bg-panel));
+    border: 1px solid hsl(var(--border));
+    border-radius: 2px;
   }
-  .focus-ring {
-    @apply outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring;
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px 6px 10px;
+    border-bottom: 1px solid hsl(var(--border-inner));
+    height: 28px;
+  }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: hsl(var(--text-muted));
+  }
+
+  .panel-body {
+    padding: 12px;
+  }
+
+  /* Pulsing indicator for "live" footer */
+  .pulse-dot {
+    position: relative;
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: hsl(var(--status-done));
+  }
+  .pulse-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: hsl(var(--status-done));
+    animation: pulse-ring 1.6s ease-out infinite;
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(2.6); opacity: 0; }
+  }
+
+  /* Animated fade for view switches */
+  .fade-in {
+    animation: fade-in 0.18s ease-out;
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(2px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
