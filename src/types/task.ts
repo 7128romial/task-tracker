@@ -38,5 +38,6 @@ export type ViewMode = 'table' | 'kanban' | 'timeline';
 export interface Filters {
   course: string;
   status: TaskStatus | 'all';
+  priority: TaskPriority | 'all';
   search: string;
 }

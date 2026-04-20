@@ -61,3 +61,8 @@ export const BACKUP_KEYS = [
 export const STORAGE_VERSION = 1 as const;
 
 export const URGENT_WINDOW_DAYS = 7;
+
+/** Hardcoded for now — shown in the top-bar breadcrumb. */
+export const SEMESTER_CONTEXT = "סמסטר ב' 2026";
+export const TIME_RANGE_LABEL = '30 ימים אחרונים';
+export const COMPLETION_WINDOW_DAYS = 14;

@@ -6,6 +6,7 @@ interface Handlers {
   onNewTask: () => void;
   onFocusSearch: () => void;
   onSetView: (view: ViewMode) => void;
+  onOpenPalette: () => void;
   modalOpen: boolean;
 }
 
@@ -17,9 +18,22 @@ function isTypingTarget(target: EventTarget | null): boolean {
   return false;
 }
 
-export function useKeyboardShortcuts({ onNewTask, onFocusSearch, onSetView, modalOpen }: Handlers) {
+export function useKeyboardShortcuts({
+  onNewTask,
+  onFocusSearch,
+  onSetView,
+  onOpenPalette,
+  modalOpen,
+}: Handlers) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      // ⌘K / Ctrl+K works even when modal is open or focus is in an input
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        onOpenPalette();
+        return;
+      }
+
       if (modalOpen) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (isTypingTarget(e.target)) return;
@@ -50,5 +64,5 @@ export function useKeyboardShortcuts({ onNewTask, onFocusSearch, onSetView, moda
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [onNewTask, onFocusSearch, onSetView, modalOpen]);
+  }, [onNewTask, onFocusSearch, onSetView, onOpenPalette, modalOpen]);
 }
