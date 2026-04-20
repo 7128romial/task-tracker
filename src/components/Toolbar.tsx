@@ -1,18 +1,19 @@
 import { forwardRef } from 'react';
-import { LayoutGrid, List, Search, X, CalendarClock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { LayoutGrid, List, Search, X, CalendarClock, SlidersHorizontal } from 'lucide-react';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { FilterChip } from '@/components/FilterChip';
 import { cn } from '@/lib/utils';
 import { t } from '@/locales/he';
-import { TASK_STATUSES, VIEW } from '@/constants/task';
-import type { TaskStatus, ViewMode } from '@/types/task';
+import { TASK_PRIORITIES, TASK_STATUSES, VIEW } from '@/constants/task';
+import { PRIORITY_CODE } from '@/constants/colors';
+import type { TaskPriority, TaskStatus, ViewMode } from '@/types/task';
 import {
   selectCourses,
   selectFiltersActive,
@@ -44,14 +45,14 @@ export const Toolbar = forwardRef<HTMLDivElement, Props>(function Toolbar(
   return (
     <div
       ref={ref}
-      className="card-surface flex flex-col gap-3 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
+      className="flex flex-wrap items-center gap-2 border-b border-border-inner px-3 py-2"
     >
+      {/* View switcher — joined border, flush with panel edge */}
       <div
-        className="flex rounded-md border border-border bg-background/60 p-0.5"
+        className="flex overflow-hidden rounded-sm border border-border"
         role="tablist"
-        aria-label={t.toolbar.view.table}
       >
-        {viewItems.map((v) => {
+        {viewItems.map((v, i) => {
           const active = view === v.id;
           const Icon = v.icon;
           return (
@@ -61,77 +62,122 @@ export const Toolbar = forwardRef<HTMLDivElement, Props>(function Toolbar(
               aria-selected={active}
               onClick={() => setView(v.id)}
               className={cn(
-                'inline-flex min-h-[40px] items-center gap-2 rounded px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'inline-flex h-7 items-center gap-1.5 px-2.5 text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                i > 0 && 'border-s border-border',
                 active
-                  ? 'bg-surface text-ink shadow-soft'
-                  : 'text-muted-foreground hover:text-ink'
+                  ? 'bg-panel-elev text-primary'
+                  : 'bg-panel text-muted-foreground hover:bg-panel-hover hover:text-body'
               )}
             >
-              <Icon className="h-4 w-4" aria-hidden />
+              <Icon className="h-3 w-3" aria-hidden />
               {v.label}
             </button>
           );
         })}
       </div>
 
-      <div className="flex flex-1 flex-wrap items-center gap-2">
-        <Select
-          value={filters.course}
-          onValueChange={(v) => setFilter('course', v)}
-        >
-          <SelectTrigger className="w-auto min-w-[140px] max-w-[220px]" aria-label={t.toolbar.filterCourse}>
-            <SelectValue placeholder={t.toolbar.filterCourse} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t.toolbar.allCourses}</SelectItem>
-            {courses.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.status}
-          onValueChange={(v) => setFilter('status', v as TaskStatus | 'all')}
-        >
-          <SelectTrigger className="w-auto min-w-[140px]" aria-label={t.toolbar.filterStatus}>
-            <SelectValue placeholder={t.toolbar.filterStatus} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t.toolbar.allStatuses}</SelectItem>
-            {TASK_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {t.statuses[s]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <div className="relative min-w-[180px] flex-1">
-          <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-          <Input
-            ref={searchInputRef}
-            value={filters.search}
-            onChange={(e) => setFilter('search', e.target.value)}
-            placeholder={t.toolbar.searchPlaceholder}
-            aria-label={t.toolbar.search}
-            className="ps-9"
+      {/* Filter chips + add-filter dropdowns */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {filters.course !== 'all' && (
+          <FilterChip
+            label={t.filterLabel.course}
+            value={filters.course}
+            onRemove={() => setFilter('course', 'all')}
           />
-        </div>
+        )}
+        {filters.status !== 'all' && (
+          <FilterChip
+            label={t.filterLabel.status}
+            value={t.statuses[filters.status as TaskStatus]}
+            onRemove={() => setFilter('status', 'all')}
+          />
+        )}
+        {filters.priority !== 'all' && (
+          <FilterChip
+            label={t.filterLabel.priority}
+            value={PRIORITY_CODE[filters.priority as TaskPriority]}
+            onRemove={() => setFilter('priority', 'all')}
+          />
+        )}
+
+        {/* Course filter add button */}
+        {filters.course === 'all' && courses.length > 0 && (
+          <Select
+            value="all"
+            onValueChange={(v) => v !== 'all' && setFilter('course', v)}
+          >
+            <SelectTrigger className="h-7 w-auto gap-1 border-dashed px-2 text-[11px] text-muted-foreground" aria-label={t.filterLabel.course}>
+              <SlidersHorizontal className="h-3 w-3" />
+              <span>{t.filterLabel.course}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t.filterLabel.any}</SelectItem>
+              {courses.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {filters.status === 'all' && (
+          <Select
+            value="all"
+            onValueChange={(v) => v !== 'all' && setFilter('status', v as TaskStatus)}
+          >
+            <SelectTrigger className="h-7 w-auto gap-1 border-dashed px-2 text-[11px] text-muted-foreground" aria-label={t.filterLabel.status}>
+              <SlidersHorizontal className="h-3 w-3" />
+              <span>{t.filterLabel.status}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t.filterLabel.any}</SelectItem>
+              {TASK_STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {t.statuses[s]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {filters.priority === 'all' && (
+          <Select
+            value="all"
+            onValueChange={(v) => v !== 'all' && setFilter('priority', v as TaskPriority)}
+          >
+            <SelectTrigger className="h-7 w-auto gap-1 border-dashed px-2 text-[11px] text-muted-foreground" aria-label={t.filterLabel.priority}>
+              <SlidersHorizontal className="h-3 w-3" />
+              <span>{t.filterLabel.priority}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t.filterLabel.any}</SelectItem>
+              {TASK_PRIORITIES.map((p) => (
+                <SelectItem key={p} value={p}>
+                  {PRIORITY_CODE[p]} · {t.priorities[p]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         {active && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearFilters}
-            className="gap-1 text-muted-foreground hover:text-ink"
-          >
-            <X className="h-3.5 w-3.5" />
-            {t.toolbar.clearFilters}
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 text-muted-foreground">
+            <X className="h-3 w-3" />
+            {t.toolbar.clear}
           </Button>
         )}
+      </div>
+
+      {/* Search */}
+      <div className="relative ms-auto min-w-[180px] max-w-[260px] flex-1">
+        <Search className="pointer-events-none absolute start-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-subtle" aria-hidden />
+        <Input
+          ref={searchInputRef}
+          value={filters.search}
+          onChange={(e) => setFilter('search', e.target.value)}
+          placeholder={t.toolbar.searchPlaceholder}
+          aria-label={t.toolbar.searchLabel}
+          className="ps-7"
+        />
       </div>
     </div>
   );

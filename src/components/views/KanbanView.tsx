@@ -6,6 +6,7 @@ import {
   useSensor,
   useSensors,
   closestCenter,
+  useDroppable,
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
@@ -13,15 +14,15 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useDroppable } from '@dnd-kit/core';
 import { toast } from 'sonner';
 import { TASK_STATUS, TASK_STATUSES } from '@/constants/task';
+import { HEX } from '@/constants/colors';
 import { t } from '@/locales/he';
 import { cn } from '@/lib/utils';
 import type { Task, TaskStatus } from '@/types/task';
 import { useTaskStore, compareTasksForOrder } from '@/stores/taskStore';
 import { useIsTouch } from '@/hooks/useMediaQuery';
-import { KanbanCard } from '@/components/KanbanCard';
+import { KanbanCard } from '@/components/views/KanbanCard';
 
 interface Props {
   tasks: Task[];
@@ -35,9 +36,9 @@ const columnLabel: Record<TaskStatus, string> = {
 };
 
 const columnAccent: Record<TaskStatus, string> = {
-  [TASK_STATUS.OPEN]: 'bg-status-open-bg text-status-open',
-  [TASK_STATUS.IN_PROGRESS]: 'bg-status-progress-bg text-status-progress',
-  [TASK_STATUS.DONE]: 'bg-status-done-bg text-status-done',
+  [TASK_STATUS.OPEN]: HEX.open,
+  [TASK_STATUS.IN_PROGRESS]: HEX.progress,
+  [TASK_STATUS.DONE]: HEX.done,
 };
 
 function Column({
@@ -52,29 +53,26 @@ function Column({
   onEditTask: (task: Task) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `column:${status}` });
-  const ids = useMemo(() => tasks.map((t) => t.id), [tasks]);
+  const ids = useMemo(() => tasks.map((task) => task.id), [tasks]);
+  const accent = columnAccent[status];
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        'card-surface flex min-h-[300px] flex-col gap-3 p-3 transition-colors',
-        isOver && 'bg-accent/5 ring-1 ring-accent/20'
+        'panel relative flex min-h-[280px] flex-col',
+        isOver && 'ring-1 ring-accent/40'
       )}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', columnAccent[status])}>
-            {columnLabel[status]}
-          </span>
-          <span className="num text-xs text-muted-foreground">{tasks.length}</span>
-        </div>
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px]" style={{ background: accent }} aria-hidden />
+      <div className="flex items-center justify-between border-b border-border-inner px-3 py-1.5">
+        <span className="panel-title">{columnLabel[status]}</span>
+        <span className="num text-[11px] text-muted-foreground">{tasks.length}</span>
       </div>
-
-      <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-col gap-2">
+      <div className="flex flex-1 flex-col gap-2 p-2">
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           {tasks.length === 0 ? (
-            <div className="rounded-md border border-dashed border-border py-6 text-center text-xs text-muted-foreground">
+            <div className="rounded-sm border border-dashed border-border py-5 text-center text-[11px] text-subtle">
               {t.kanban.empty}
             </div>
           ) : (
@@ -87,8 +85,8 @@ function Column({
               />
             ))
           )}
-        </div>
-      </SortableContext>
+        </SortableContext>
+      </div>
     </div>
   );
 }
@@ -115,11 +113,9 @@ export function KanbanView({ tasks, onEditTask }: Props) {
     return acc;
   }, [tasks]);
 
-  const activeTask = tasks.find((t) => t.id === activeId) ?? null;
+  const activeTask = tasks.find((task) => task.id === activeId) ?? null;
 
-  const handleDragStart = (e: DragStartEvent) => {
-    setActiveId(String(e.active.id));
-  };
+  const handleDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
 
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveId(null);
@@ -142,7 +138,6 @@ export function KanbanView({ tasks, onEditTask }: Props) {
       setStatus(task.id, destStatus);
       toast.success(t.toast.statusChanged);
     }
-    // Same-column reorder is not persisted (columns sort by deadline).
   };
 
   return (
@@ -166,7 +161,7 @@ export function KanbanView({ tasks, onEditTask }: Props) {
       </div>
       <DragOverlay>
         {activeTask && (
-          <div className="rotate-1 opacity-90">
+          <div className="rotate-1">
             <KanbanCard task={activeTask} sortable={false} onClick={() => {}} />
           </div>
         )}

@@ -24,17 +24,14 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.error) {
       return (
         <div className="flex min-h-screen items-center justify-center p-6">
-          <div className="card-surface max-w-md p-8 text-center">
-            <h2 className="font-fraunces text-2xl italic text-ink">
+          <div className="panel max-w-md p-6 text-center">
+            <h2 className="text-sm font-semibold text-primary">
               {t.errors.boundaryTitle}
             </h2>
-            <p className="mt-3 text-sm text-muted-foreground">
+            <p className="mt-2 text-xs text-muted-foreground">
               {t.errors.boundaryBody}
             </p>
-            <Button
-              className="mt-6"
-              onClick={() => window.location.reload()}
-            >
+            <Button className="mt-4" onClick={() => window.location.reload()}>
               {t.errors.reload}
             </Button>
           </div>

@@ -1,16 +1,21 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Header } from '@/components/Header';
-import { StatsCards } from '@/components/StatsCards';
+import { TopBar } from '@/components/TopBar';
+import { StatsRow } from '@/components/StatsRow';
 import { Toolbar } from '@/components/Toolbar';
 import { TaskForm } from '@/components/TaskForm';
 import { EmptyState } from '@/components/EmptyState';
 import { Footer } from '@/components/Footer';
+import { Panel } from '@/components/Panel';
+import { CommandPalette } from '@/components/CommandPalette';
 import { TableView } from '@/components/views/TableView';
 import { KanbanView } from '@/components/views/KanbanView';
 import { TimelineView } from '@/components/views/TimelineView';
+import { CompletionChart } from '@/components/panels/CompletionChart';
+import { CourseDistribution } from '@/components/panels/CourseDistribution';
 import { VIEW } from '@/constants/task';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboard';
 import type { Task, ViewMode } from '@/types/task';
+import { t } from '@/locales/he';
 import {
   selectFilteredTasks,
   selectFiltersActive,
@@ -26,6 +31,7 @@ export function Dashboard() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const openAdd = useCallback(() => {
@@ -43,17 +49,14 @@ export function Dashboard() {
     searchRef.current?.select();
   }, []);
 
-  const handleSetView = useCallback(
-    (v: ViewMode) => {
-      setView(v);
-    },
-    [setView]
-  );
+  const handleSetView = useCallback((v: ViewMode) => setView(v), [setView]);
+  const openPalette = useCallback(() => setPaletteOpen(true), []);
 
   useKeyboardShortcuts({
     onNewTask: openAdd,
     onFocusSearch: focusSearch,
     onSetView: handleSetView,
+    onOpenPalette: openPalette,
     modalOpen: formOpen,
   });
 
@@ -68,7 +71,11 @@ export function Dashboard() {
       case VIEW.TABLE:
         return <TableView tasks={filtered} onEditTask={openEdit} />;
       case VIEW.KANBAN:
-        return <KanbanView tasks={filtered} onEditTask={openEdit} />;
+        return (
+          <div className="p-3">
+            <KanbanView tasks={filtered} onEditTask={openEdit} />
+          </div>
+        );
       case VIEW.TIMELINE:
         return <TimelineView tasks={filtered} onEditTask={openEdit} />;
     }
@@ -76,16 +83,31 @@ export function Dashboard() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header onNewTask={openAdd} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-5 sm:px-6 sm:py-6">
-        <div className="flex flex-col gap-4 sm:gap-5">
-          <StatsCards />
-          <Toolbar searchInputRef={searchRef} />
-          <div className="animate-fade-in">{viewContent}</div>
+      <TopBar onNewTask={openAdd} onOpenPalette={openPalette} />
+      <main className="mx-auto w-full max-w-[1440px] flex-1 px-3 py-3 sm:px-4">
+        <div className="flex flex-col gap-3">
+          <StatsRow />
+
+          <Panel
+            title={t.panels.tasksTitle}
+            titleEnd={<span className="num text-[11px] text-muted-foreground">{filtered.length}</span>}
+            bodyClassName="p-0"
+          >
+            <Toolbar searchInputRef={searchRef} />
+            <div className="fade-in" key={view}>
+              {viewContent}
+            </div>
+          </Panel>
+
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <CompletionChart />
+            <CourseDistribution />
+          </div>
         </div>
       </main>
       <Footer />
       <TaskForm open={formOpen} onOpenChange={setFormOpen} task={editingTask} />
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onNewTask={openAdd} />
     </div>
   );
 }

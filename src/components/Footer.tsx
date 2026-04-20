@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Download, Upload, Trash2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -10,14 +10,32 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Kbd } from '@/components/Kbd';
 import { t } from '@/locales/he';
 import { useTaskStore } from '@/stores/taskStore';
 import { buildSampleTasks } from '@/stores/sampleData';
 import { exportJson, parseImport, readFileAsText } from '@/utils/export';
 import type { Task } from '@/types/task';
 
+function useSecondsSince(isoTimestamp: string): number {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const i = setInterval(() => setTick((x) => x + 1), 1000);
+    return () => clearInterval(i);
+  }, []);
+  return Math.max(0, Math.round((Date.now() - new Date(isoTimestamp).getTime()) / 1000));
+}
+
+function formatSince(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+  return `${Math.floor(seconds / 86400)}d`;
+}
+
 export function Footer() {
   const tasks = useTaskStore((s) => s.tasks);
+  const lastMutationAt = useTaskStore((s) => s.lastMutationAt);
   const replaceAll = useTaskStore((s) => s.replaceAll);
   const clearAll = useTaskStore((s) => s.clearAll);
   const loadSample = useTaskStore((s) => s.loadSample);
@@ -26,6 +44,8 @@ export function Footer() {
   const [pendingImport, setPendingImport] = useState<Task[] | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
 
+  const seconds = useSecondsSince(lastMutationAt);
+
   const handleExport = () => {
     try {
       exportJson(tasks);
@@ -33,10 +53,6 @@ export function Footer() {
     } catch {
       toast.error(t.toast.storageError);
     }
-  };
-
-  const handleImportClick = () => {
-    fileRef.current?.click();
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,41 +82,51 @@ export function Footer() {
     setConfirmClear(false);
   };
 
-  const handleSample = () => {
-    loadSample(buildSampleTasks());
-    toast.success(t.toast.sampleLoaded);
-  };
-
   return (
-    <footer className="mx-auto mt-8 w-full max-w-6xl px-4 pb-10 pt-4 sm:px-6">
-      <div className="flex flex-col gap-4 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+    <footer className="mx-auto w-full max-w-[1440px] border-t border-border px-4 py-2">
+      <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
+        {/* Left: live refresh indicator */}
+        <div className="flex items-center gap-2">
+          <span className="pulse-dot" aria-hidden />
           <span>
-            {t.footer.taskCount}: <span className="num font-medium text-ink">{tasks.length}</span>
+            {t.footer.refreshedPrefix} <span className="num text-body">{formatSince(seconds)}</span>
           </span>
-          <span className="hidden sm:inline">·</span>
-          <span className="hidden flex-wrap items-center gap-1.5 sm:inline-flex">
-            <Kbd>N</Kbd> {t.footer.shortcutNew}
-            <span className="mx-1">·</span>
-            <Kbd>/</Kbd> {t.footer.shortcutSearch}
-            <span className="mx-1">·</span>
-            <Kbd>1</Kbd>
-            <Kbd>2</Kbd>
-            <Kbd>3</Kbd> {t.footer.shortcutViews}
+          <span className="text-subtle">·</span>
+          <span>
+            <span className="num text-body">{tasks.length}</span> {t.footer.tasksSuffix}
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleSample}>
-            <Sparkles className="h-3.5 w-3.5" />
+        {/* Middle: shortcut legend */}
+        <div className="hidden items-center gap-1.5 md:flex">
+          <span className="text-subtle">{t.footer.shortcutsLabel}</span>
+          <Kbd>N</Kbd>
+          <span className="text-subtle">{t.footer.shortcutNew}</span>
+          <span className="text-subtle">·</span>
+          <Kbd>/</Kbd>
+          <span className="text-subtle">{t.footer.shortcutSearch}</span>
+          <span className="text-subtle">·</span>
+          <Kbd>1</Kbd>
+          <Kbd>2</Kbd>
+          <Kbd>3</Kbd>
+          <span className="text-subtle">{t.footer.shortcutViews}</span>
+          <span className="text-subtle">·</span>
+          <Kbd>⌘K</Kbd>
+          <span className="text-subtle">{t.footer.shortcutPalette}</span>
+        </div>
+
+        {/* Right: storage + actions */}
+        <div className="ms-auto flex flex-wrap items-center gap-1.5">
+          <Button variant="ghost" size="sm" onClick={() => loadSample(buildSampleTasks())} className="gap-1">
+            <Sparkles className="h-3 w-3" />
             {t.footer.loadSample}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="sm" onClick={handleExport} className="gap-1">
+            <Download className="h-3 w-3" />
             {t.footer.export}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleImportClick}>
-            <Upload className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="sm" onClick={() => fileRef.current?.click()} className="gap-1">
+            <Upload className="h-3 w-3" />
             {t.footer.import}
           </Button>
           {tasks.length > 0 && (
@@ -108,12 +134,13 @@ export function Footer() {
               variant="ghost"
               size="sm"
               onClick={() => setConfirmClear(true)}
-              className="text-muted-foreground hover:text-priority-high"
+              className="gap-1 text-muted-foreground hover:text-severity-danger"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-3 w-3" />
               {t.footer.clear}
             </Button>
           )}
+          <span className="num ms-2 hidden text-subtle md:inline">{t.footer.storage}</span>
         </div>
       </div>
 
@@ -129,11 +156,9 @@ export function Footer() {
       <Dialog open={pendingImport !== null} onOpenChange={(o) => !o && setPendingImport(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-fraunces italic">{t.footer.confirmImportTitle}</DialogTitle>
+            <DialogTitle>{t.footer.confirmImportTitle}</DialogTitle>
             <DialogDescription>
-              {pendingImport
-                ? t.footer.confirmImportWithCount(pendingImport.length)
-                : t.footer.confirmImportBody}
+              {pendingImport ? t.footer.confirmImportWithCount(pendingImport.length) : ''}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -148,7 +173,7 @@ export function Footer() {
       <Dialog open={confirmClear} onOpenChange={setConfirmClear}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-fraunces italic">{t.footer.confirmClearTitle}</DialogTitle>
+            <DialogTitle>{t.footer.confirmClearTitle}</DialogTitle>
             <DialogDescription>{t.footer.confirmClearBody}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -162,13 +187,5 @@ export function Footer() {
         </DialogContent>
       </Dialog>
     </footer>
-  );
-}
-
-function Kbd({ children }: { children: React.ReactNode }) {
-  return (
-    <kbd className="num inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded border border-border bg-surface px-1 text-[10px] font-medium text-ink shadow-soft">
-      {children}
-    </kbd>
   );
 }
