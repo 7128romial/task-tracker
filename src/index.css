@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Brand palette (HSL triplets for Tailwind + opacity) */
+    --cream: 36 33% 94%;              /* #F5F1EA */
+    --ink: 34 14% 9%;                 /* #1A1814 */
+    --muted-foreground: 24 5% 46%;    /* #78716C */
+    --border: 36 26% 86%;             /* #E7E0D3 */
+    --surface: 0 0% 100%;             /* #FFFFFF */
+    --accent: 161 29% 25%;            /* #2E5247 */
+    --accent-foreground: 36 33% 94%;
+
+    /* shadcn canonical tokens mapped onto our palette */
+    --background: 36 33% 94%;
+    --foreground: 34 14% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 34 14% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 34 14% 9%;
+    --primary: 161 29% 25%;
+    --primary-foreground: 36 33% 94%;
+    --secondary: 36 26% 90%;
+    --secondary-foreground: 34 14% 9%;
+    --muted: 36 26% 90%;
+    --destructive: 12 56% 41%;
+    --destructive-foreground: 0 0% 100%;
+    --input: 36 26% 86%;
+    --ring: 161 29% 25%;
+
+    /* Priority swatches */
+    --priority-high: 12 56% 41%;      /* #A34730 */
+    --priority-high-bg: 19 47% 90%;   /* #F3E1D9 */
+    --priority-medium: 33 52% 48%;    /* #B8813B */
+    --priority-medium-bg: 38 63% 89%; /* #F5E8D0 */
+    --priority-low: 24 5% 46%;        /* #78716C */
+    --priority-low-bg: 42 26% 91%;    /* #EFEAE0 */
+
+    /* Status swatches */
+    --status-open: 24 5% 46%;         /* #78716C */
+    --status-open-bg: 42 26% 91%;
+    --status-progress: 205 41% 38%;   /* #3A6B8A */
+    --status-progress-bg: 210 36% 90%;/* #DDE8F0 */
+    --status-done: 89 25% 38%;        /* #5F7A4A */
+    --status-done-bg: 82 24% 89%;     /* #E4EADA */
+
+    --radius: 0.625rem;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background font-heebo text-foreground antialiased;
+    font-feature-settings: 'ss01';
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Numbers render LTR even inside RTL paragraphs */
+  .num {
+    direction: ltr;
+    unicode-bidi: isolate;
+    display: inline-block;
+  }
+
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  .card-surface {
+    @apply rounded-lg border border-border bg-surface shadow-soft;
+  }
+  .focus-ring {
+    @apply outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring;
+  }
+}
